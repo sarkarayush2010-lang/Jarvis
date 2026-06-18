@@ -1,5 +1,6 @@
 # JARVIS AI Assistant & Audio Visualizer Interface
 
+Go to releases on the right side of github and install most up-to-date version. Run the code(more detailed instructions below). Then head over to the hud visualizer site to actually visualize jarvis talking to you
 HUD visualizer Site: https://jarvis-ten-beta.vercel.app/
 
 ---

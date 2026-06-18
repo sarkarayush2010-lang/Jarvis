@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Jarvis Interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght=100;300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle, #0c1017 0%, #05070a 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Roboto', sans-serif;
+            color: #ffffff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hud-telemetry {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            text-align: right;
+            user-select: none;
+        }
+
+        .hud-telemetry h2 {
+            font-weight: 700;
+            font-size: 8rem;
+            letter-spacing: 4px;
+            margin: 0 0 5px 0;
+            color: rgb(24, 207, 231);
+            text-shadow: 0 0 10px rgba(24, 207, 231, 0.4);
+        }
+
+        .hud-telemetry .time {
+            font-weight: 300;
+            font-size: 3rem;
+            letter-spacing: 3px;
+            color: rgb(130, 160, 180);
+            margin-bottom: 3px;
+        }
+
+        .hud-telemetry .date {
+            font-weight: 100;
+            font-size: 1.9rem;
+            letter-spacing: 2px;
+            color: rgb(85, 115, 135);
+        }
+
+        .hud-telemetry .subtext {
+            font-weight: 100;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            color: rgb(85, 115, 135);
+        }
+
+        .jarvis-container {
+            text-align: center;
+            position: relative;
+            width: 440px;
+            height: 440px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .extreme-outer-ring {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            border: 30px dashed rgba(0, 195, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.05s linear, box-shadow 0.05s linear;
+        }
+
+        .outer-ring {
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            border: 40px dashed rgba(0, 195, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.05s linear, box-shadow 0.05s linear;
+            z-index: 2;
+        }
+
+        .innercore {
+            position: absolute;
+            width: 230px;
+            height: 230px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 1) 0%, rgba(79, 172, 254, 0.3) 70%);
+            border-radius: 50%;
+            animation: pulse 2.5s ease-in-out infinite alternate;
+            cursor: pointer;
+            transition: transform 0.05s linear, box-shadow 0.05s linear;
+            box-shadow: 0 0 40px rgba(0, 195, 255, 0.5);
+            z-index: 3;
+        }
+
+        .system-status {
+            position: absolute;
+            bottom: -60px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .system-status p {
+            font-weight: 300;
+            font-size: 0.9rem;
+            color: rgb(50, 70, 80);
+            letter-spacing: 2px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.97); opacity: 0.85; }
+            100% { transform: scale(1.03); opacity: 1; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="hud-telemetry">
+        <h2>JARVIS</h2>
+        <div class="time" id="hud-time">00:00:00 PM</div>
+        <div class="date" id="hud-date">LOADING SYSTEM DATE...</div>
+        <div class="subtext">Jarvis Visualizer Core -- Created By Ayush S</div>
+        <div class="subtext">This is MY code you can't steal it</div>
+    </div>
+
+    <div class="jarvis-container">
+        <div class="extreme-outer-ring"></div>
+        <div class="outer-ring"></div>
+        <div class="innercore" title="Click to source computer sound or mic"></div>
+        <div class="system-status">
+            <p id="click-prompt">Click to Connect audio</p>
+        </div>
+    </div>
+
+    <script>
+        const jarviscore = document.querySelector('.innercore');
+        const outerRing = document.querySelector('.outer-ring');
+        const extremeOuterRing = document.querySelector('.extreme-outer-ring');
+        const promptText = document.getElementById('click-prompt');
+
+        let audioContext, analyser, dataArray, source, isVisualizing = false;
+        let currentRotation = 0; 
+
+        function updateClock() {
+            const now = new Date();
+            let timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            let dateString = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            document.getElementById('hud-time').innerText = timeString;
+            document.getElementById('hud-date').innerText = dateString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function idleRotation() {
+            if (isVisualizing) return; 
+            currentRotation += 0.4; 
+            outerRing.style.transform = 'rotate(' + currentRotation + 'deg)';
+            extremeOuterRing.style.transform = 'rotate(' + (-currentRotation) + 'deg)';
+            requestAnimationFrame(idleRotation);
+        }
+        requestAnimationFrame(idleRotation);
+
+        async function initAudioStream() {
+            if (isVisualizing) return;
+
+            try {
+                let stream;
+                if (navigator.mediaDevices.getDisplayMedia) {
+                    promptText.innerText = "Give me your audio";
+                    stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                } else {
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                source = audioContext.createMediaStreamSource(stream);
+                
+                source.connect(analyser);
+                analyser.fftSize = 128; 
+                
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                isVisualizing = true;
+                jarviscore.style.animation = 'none'; 
+                promptText.innerText = "AUDIO FEED ONLINE";
+                promptText.style.color = "rgb(24, 207, 231)";
+
+                runVisualizerLoop();
+            } catch (err) {
+                console.warn("No audio selected, recording from microphone input", err);
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        analyser = audioContext.createAnalyser();
+                        source = audioContext.createMediaStreamSource(stream);
+                        source.connect(analyser);
+                        analyser.fftSize = 128;
+                        dataArray = new Uint8Array(analyser.frequencyBinCount);
+                        isVisualizing = true;
+                        jarviscore.style.animation = 'none';
+                        promptText.innerText = "Source: MIC";
+                        runVisualizerLoop();
+                    })
+                    .catch(e => {
+                        promptText.innerText = "No audio :(";
+                        promptText.style.color = "rgb(255, 50, 50)";
+                    });
+            }
+        }
+
+        function runVisualizerLoop() {
+            if (!isVisualizing) return;
+            requestAnimationFrame(runVisualizerLoop);
+            
+            analyser.getByteFrequencyData(dataArray);
+            
+            let total = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                total += dataArray[i];
+            }
+            let average = total / dataArray.length;
+
+            let scaleFactor = 1 + (average / 190); 
+            let glowFactor = average * 1.2;
+
+            currentRotation += 0.4; 
+
+            jarviscore.style.transform = 'scale(' + scaleFactor + ')';
+            jarviscore.style.boxShadow = '0 0 ' + (40 + glowFactor) + 'px rgba(0, 195, 255, 0.8)';
+            
+            let outerScaleFactor = 1 + (average / 120); 
+            outerRing.style.transform = 'rotate(' + currentRotation + 'deg) scale(' + outerScaleFactor + ')';
+            outerRing.style.boxShadow = '0 0 ' + (15 + glowFactor) + 'px rgba(0, 195, 255, 0.5)';
+
+            let extremeScaleFactor = 1 + (average / 150);
+            extremeOuterRing.style.transform = 'rotate(' + (-currentRotation) + 'deg) scale(' + extremeScaleFactor + ')';
+            extremeOuterRing.style.boxShadow = '0 0 ' + (10 + glowFactor * 0.7) + 'px rgba(0, 195, 255, 0.3)';
+        }
+
+        jarviscore.addEventListener('click', initAudioStream);
+    </script>
+</body>
+
+</html>
